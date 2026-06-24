@@ -80,7 +80,9 @@ g1, g2 = st.columns(2)
 
 with g1:
     if 'Категория' in filtered_df.columns and 'Сумма' in filtered_df.columns:
-        fig_pie = px.pie(filtered_df, values='Сумma', names='Категория', title="Распределение по категориям / товарам")
+        fig_pie = px.pie(filtered_df, values='Сумма', names='Категория', title="Распределение по категориям / товарам")
+
+
         st.plotly_chart(fig_pie, use_container_width=True)
 
 with g2:
