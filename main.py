@@ -39,31 +39,15 @@ st.title(APP_TITLE)
 
 # --- ИСТОЧНИК ДАННЫХ ---
 st.sidebar.header("📁 Источник данных")
-# Добавили третий универсальный вариант в ваше меню
+# УБРАЛИ СТАРЫЙ ВАРИАНТ ИЗ СПИСКА: теперь тут только два пункта
 data_source = st.sidebar.radio(
     "Выберите данные:", 
-    ["Тестовые данные", "Загрузить свои данные (CSV)", "Универсальный анализатор (любые файлы)"]
+    ["Тестовые данные", "Универсальный анализатор (csv, xlsx, xls)"]
 )
 
-# === ЛОГИКА ДЛЯ ВАШИХ СТАРЫХ ВАРИАНТОВ ===
-if data_source in ["Тестовые данные", "Загрузить свои данные (CSV)"]:
-    if data_source == "Тестовые данные":
-        df = generate_mock_data()
-    else:
-        uploaded_file = st.sidebar.file_uploader("Загрузите ваш CSV-файл", type=["csv"])
-        if uploaded_file is not None:
-            try:
-                df = pd.read_csv(uploaded_file)
-                required_cols = ['Категория', 'Сумма', 'Дата']
-                if not all(col in df.columns for col in required_cols):
-                    st.sidebar.warning("Убедитесь, что в файле есть колонки: Категория, Сумма, Дата. Показываем тестовые.")
-                    df = generate_mock_data()
-            except Exception as e:
-                st.sidebar.error(f"Ошибка чтения файла: {e}")
-                df = generate_mock_data()
-        else:
-            st.info("💡 Загрузите CSV-файл в боковом меню. Пока показываются демонстрационные данные.")
-            df = generate_mock_data()
+# === ЛОГИКА ДЛЯ ТЕСТОВЫХ ДАННЫХ ===
+if data_source == "Тестовые данные":
+    df = generate_mock_data()
 
     # --- ВАША СТАРЯ ФИЛЬТРАЦИЯ И АНАЛИТИКА ---
     st.sidebar.header("⏳ Фильтры")
@@ -97,16 +81,14 @@ if data_source in ["Тестовые данные", "Загрузить свои
     st.subheader("📋 Таблица операций")
     st.dataframe(filtered_df, use_container_width=True)
 
-# === НОВАЯ ЛОГИКА ДЛЯ ЛЮБЫХ ФАЙЛОВ ===
+# === УНИВЕРСАЛЬНЫЙ АНАЛИЗАТОР (ЛЮБЫЕ ФАЙЛЫ) ===
 else:
     st.subheader("📊 Универсальный анализ любых таблиц (CSV или Excel)")
     
-    # Позволяем загружать и CSV, и Excel в этом режиме
     univ_file = st.file_uploader("Выберите любой файл для анализа", type=["csv", "xlsx", "xls"])
     
     if univ_file is not None:
         try:
-            # Читаем файл в зависимости от расширения
             if univ_file.name.endswith('.csv'):
                 df_any = pd.read_csv(univ_file)
             else:
@@ -114,15 +96,13 @@ else:
                 
             st.success("✅ Файл успешно загружен!")
             
-            # Показываем структуру файла
-            st.subheader("📋 Предварительный просмотр данных")
-            st.dataframe(df_any.head(10), use_container_width=True)
+            # ИЗМЕНЕНО: Показываем таблицу ПОЛНОСТЬЮ (убрали .head(10))
+            st.subheader("📋 Полный просмотр данных таблицы")
+            st.dataframe(df_any, use_container_width=True)
             
-            # Динамически вытаскиваем названия колонок из загруженного файла
             all_cols = df_any.columns.tolist()
             numeric_cols = df_any.select_dtypes(include=['number']).columns.tolist()
             
-            # Настройки графиков прямо на странице
             st.subheader("⚙️ Настройка графиков под ваш файл")
             c1, c2 = st.columns(2)
             
@@ -135,9 +115,7 @@ else:
                     value_col = None
                     st.warning("В файле нет числовых колонок для математических расчетов.")
             
-            # Строим графики на основе выбора пользователя
             if value_col:
-                # Группируем данные динамически
                 summary_df = df_any.groupby(group_col)[value_col].sum().reset_index()
                 
                 g1, g2 = st.columns(2)
@@ -148,11 +126,10 @@ else:
                     fig_any_bar = px.bar(summary_df, x=group_col, y=value_col, title=f"Объемы по {group_col}")
                     st.plotly_chart(fig_any_bar, use_container_width=True)
             
-            # Статистика по файлу
             st.subheader("🔢 Информация о таблице")
             st.write(f"Всего строк в файле: **{df_any.shape[0]}**, Всего колонок: **{df_any.shape[1]}**")
             
         except Exception as e:
             st.error(f"❌ Ошибка при чтении или обработке файла: {e}")
     else:
-        st.info("💡 Пожалуйста, загрузите любой файл таблицы выше, чтобы протестировать этот режим.")
+        st.info("💡 Пожалуйста, загрузите любой файл таблицы выше, чтобы начать анализ.")
